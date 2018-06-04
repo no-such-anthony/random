@@ -91,7 +91,7 @@ def parse(data, field_type, field_length):
     return '1234'
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind(('10.0.69.30', 30001))
+sock.bind(('10.0.0.30', 30001))
 while True:
     buf, addr = sock.recvfrom(1500)
     (version, count) = struct.unpack('!HH',buf[0:4])
