@@ -4,7 +4,7 @@ Proof of Concept Netflow v9 collector for WLC <= 8.1
 
 Needs work.
 
-Modified from the code on http://codestacking.blogspot.com/2017/02/netflow-version-9-collector-in-python.html
+Modified from http://codestacking.blogspot.com/2017/02/netflow-version-9-collector-in-python.html
 
 """
 
