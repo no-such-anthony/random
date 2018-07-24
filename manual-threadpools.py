@@ -43,10 +43,8 @@ def main():
             print("pausing threading: max threads reached")
             while 1:
                 time.sleep(1)
-                set1 = set(my_thread_list)
-                set2 = set(threading.enumerate())
-                set3 = set1.difference(set2)
-                [my_thread_list.remove(thread_obj) for thread_obj in set3] 
+                finished = set(my_thread_list) - set(threading.enumerate())
+                [my_thread_list.remove(thread_obj) for thread_obj in finished] 
                 if len(my_thread_list) < max_threads:
                     print("continuing threading")
                     break
