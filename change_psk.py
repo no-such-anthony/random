@@ -107,7 +107,7 @@ if __name__ == "__main__":
   run()
 
 
-#Known possible errors:
+#Known WLC error output:
 #Request failed for WLAN 6 - WLAN Identifier is invalid.
 #Incorrect input! Use 'config wlan security wpa akm [802.1x/psk/cckm/ft/ft psk/pmf 801.x/pmf psk] [enable/disable] <wlan ID>
 #Do I care if flash is busy and it isn't saved?
