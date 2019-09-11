@@ -3,37 +3,43 @@ from nornir.plugins.tasks.networking import netmiko_send_command
 from nornir.plugins.functions.text import print_result
 from nornir.core.task import Result
 import argparse
+import sys
 
-
-# wlan id is found via the gui or cli - show wlan summary
-# requires <ssid>: <wlan_id> data variable
-# example
+#
+#wlan id is found via the gui or cli - show wlan summary
+#requires <ssid>: <wlan_id> data variable
+#example hosts.yaml
+#---
+#my-wlc01:
+#  hostname: my-wlc01
+#  username: 
+#  password: 
+#  platform: wlc
+#  connection_options:
+#    netmiko:
+#      platform: cisco_wlc
 #  data:
-#    events: 6
+#    events: 4
 #
 
 def change_psk(task, new_psk, ssid):
   changed = False
-  try:
-    wlan_id = task.host[ssid]
-  except:
+
+  wlan_id = task.host.get(ssid, None)
+  if wlan_id is None:
     return Result(host=task.host, changed=changed, failed=True, result=f"Could not find {ssid} in data variables.")
 
   if not isinstance(wlan_id, int):
     return Result(host=task.host, changed=changed, failed=True, result=f"The wlan_id for {ssid} needs to be an integer.")
-  
+
   cmd_array = [f'config wlan disable {wlan_id}',
                f'config wlan security wpa akm psk set-key ascii {new_psk} {wlan_id}',
                f'config wlan enable {wlan_id}',
               ]
   
-  cmd_array_testing = [f'config wlan disable {wlan_id}',
-               f'config wlan enable {wlan_id}',
-              ]
-
-  #Known possible errors:
-  #Request failed for WLAN 6 - WLAN Identifier is invalid.
-  #Incorrect input! Use 'config wlan security wpa akm [802.1x/psk/cckm/ft/ft psk/pmf 801.x/pmf psk] [enable/disable] <wlan ID>
+  #cmd_array_testing = [f'config wlan disable {wlan_id}',
+  #             f'config wlan enable {wlan_id}',
+  #            ]
 
   for cmd_str in cmd_array:
     r = task.run(task=netmiko_send_command, name=cmd_str, command_string=cmd_str)
@@ -48,22 +54,19 @@ def change_psk(task, new_psk, ssid):
   if "Are you sure" in r.result:
     r = task.run(task=netmiko_send_command, name="save (y/n)", command_string="y", use_timing=True, strip_prompt=False, strip_command=False)
 
-  #Do I care if flash is busy and it isn't saved?
-  #if "Configuration Saved" not in r.result:
-
   return Result(host=task.host, changed=changed, failed=False, result='Changed PSK.')
 
 def main(new_psk, ssid, device):
 
-  print("Arguments:", new_psk, ssid, device)
+  #print("Arguments:", new_psk, ssid, device)
 
   nr = InitNornir(config_file='config.yaml')
   nr = nr.filter(platform='wlc')
-  print(nr.inventory.hosts)
+  #print(nr.inventory.hosts)
 
   if device:
     nr = nr.filter(filter_func=lambda h: h.name in device)
-    print('Filtered hosts')
+    print('Optionally filtered to hosts:')
     print(nr.inventory.hosts)
   results = nr.run(task=change_psk, new_psk=new_psk, ssid=ssid)
   print_result(results)
@@ -92,8 +95,20 @@ def run():
     help="Filter to this WLC.  Pass this option again to add as many WLCs you want to filter to. Optional"
   )
   args = parser.parse_args()
+
+  if len(args.psk) < 8:
+    print("The new psk needs to be a minimum of 8 characters.")
+    sys.exit(1)
+  
   main(args.psk, args.ssid, args.device)
 
 
 if __name__ == "__main__":
   run()
+
+
+#Known possible errors:
+#Request failed for WLAN 6 - WLAN Identifier is invalid.
+#Incorrect input! Use 'config wlan security wpa akm [802.1x/psk/cckm/ft/ft psk/pmf 801.x/pmf psk] [enable/disable] <wlan ID>
+#Do I care if flash is busy and it isn't saved?
+#if "Configuration Saved" not in r.result:
